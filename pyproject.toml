@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "rest-api-logger"
+name = "apilogger"
 version = "0.1.0"
 description = "Detailed logger for python REST api"
 authors = ["Bee Dev <dev@beefree.io>"]
