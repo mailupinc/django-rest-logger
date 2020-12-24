@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Callable
 
-from django.conf import settings
+from .conf import settings
 
 from .utils import apply_hash_filter
 
