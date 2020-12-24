@@ -7,7 +7,7 @@ def apply_hash_filter(data: dict) -> dict:
     """
     Iterates over the filter tuples from settings and call hashing function on them
     """
-    for key_path in settings.REST_LOGGER_KEY_PATH_TO_HASH:
+    for key_path in settings.API_LOGGER_KEY_PATH_TO_HASH:
         find_and_hash_key(data, key_path)
     return data
 

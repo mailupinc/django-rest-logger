@@ -20,12 +20,12 @@ class RESTRequestLoggingMiddleware:
         self.cached_request_body = None
 
     def __call__(self, request):
-        if settings.REST_LOGGER_ENABLED:
+        if settings.API_LOGGER_ENABLED:
             data = self._get_request_info(request)
 
         response = self.get_response(request)
 
-        if settings.REST_LOGGER_ENABLED:
+        if settings.API_LOGGER_ENABLED:
             data.update(self._get_response_info(response))
             apply_hash_filter(data)
             log.info("Execution Log", extra=data)
