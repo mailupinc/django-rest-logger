@@ -6,7 +6,7 @@ from .conf import settings
 
 from .utils import apply_hash_filter
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("django.request")
 
 
 class RESTRequestLoggingMiddleware:
