@@ -1,1 +1,1 @@
-# rest-api-logger
+# django-rest-logger

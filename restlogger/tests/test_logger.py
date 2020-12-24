@@ -1,4 +1,4 @@
-from apilogger import __version__
+from restlogger import __version__
 
 
 def test_version():
