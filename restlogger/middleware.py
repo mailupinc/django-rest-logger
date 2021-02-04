@@ -41,7 +41,10 @@ class RESTRequestLoggingMiddleware:
         if auth_headers := headers.get("Authorization"):
             token = self._get_raw_token(auth_headers)
             jwt_payload = self._get_jwt_payload(token)
-        user = request.user
+        try:
+            user = request.user
+        except AttributeError:
+            user = None
         request_data = {
             "request": {
                 "path": request.get_full_path(),
