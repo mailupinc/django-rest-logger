@@ -3,7 +3,6 @@ import logging
 from typing import Callable
 
 from .conf import settings
-
 from .utils import apply_hash_filter
 
 log = logging.getLogger("django.request")
