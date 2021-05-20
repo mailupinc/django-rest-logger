@@ -5,7 +5,7 @@ from typing import Callable
 from .conf import settings
 from .utils import apply_hash_filter
 
-log = logging.getLogger("django.request")
+log = logging.getLogger("restlogger")
 
 
 class RESTRequestLoggingMiddleware:
@@ -79,6 +79,7 @@ class RESTRequestLoggingMiddleware:
         """
         Try to get the body of the request, if any
         """
+        # TODO try get request.data then json of request.body then NOT Serialible
         if not self.cached_request_body:
             return {}
         try:
@@ -91,14 +92,13 @@ class RESTRequestLoggingMiddleware:
         """
         Extracts info from a response (DRF response object)
         """
-        response_data = {
+        return {
             "response": {
                 "data": self._get_response_data(response)
                 or "Not a REST Framework response",
                 "status_code": response.status_code,
             }
         }
-        return response_data
 
     def _get_response_data(self, response) -> dict:
         """
