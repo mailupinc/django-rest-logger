@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Dict
 
 from .conf import settings
 from .utils import apply_hash_filter, exclude_path
@@ -15,7 +15,7 @@ class RESTRequestLoggingMiddleware:
     Best suited for using with Django REST Framework (DRF)
     """
 
-    extra_log_info = {}
+    extra_log_info: Dict[dict, dict] = {}
 
     def __init__(self, get_response: Callable):
         self.get_response = get_response
