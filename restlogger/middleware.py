@@ -31,6 +31,7 @@ class RESTRequestLoggingMiddleware:
             response = self.get_response(request)
             finish_time = datetime.utcnow()
             data.update(self._get_response_info(response))
+            data.update(self.extra_log_info)
             apply_hash_filter(data)
             data.update(self.timing_fields(start_time, finish_time))
             log.info("Execution Log", extra=data)
@@ -39,6 +40,16 @@ class RESTRequestLoggingMiddleware:
             response = self.get_response(request)
 
         return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        self.extra_log_info = {"extra_info": {}}
+        try:
+            self.extra_log_info["extra_info"] = getattr(
+                view_func.view_class, "extra_log_info", {}
+            )
+        except AttributeError:
+            pass
+        return None
 
     def _get_request_info(self, request) -> dict:
         """
