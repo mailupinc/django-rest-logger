@@ -26,16 +26,7 @@ class RESTRequestLoggingMiddleware:
         should_log = settings.API_LOGGER_ENABLED and not exclude_path(request.path)
 
         if should_log:
-            data = self._get_request_info(request)
-            start_time = datetime.utcnow()
-            response = self.get_response(request)
-            finish_time = datetime.utcnow()
-            data.update(self._get_response_info(response))
-            data.update(self.extra_log_info)
-            apply_hash_filter(data)
-            data.update(self.timing_fields(start_time, finish_time))
-            log.info("Execution Log", extra=data)
-
+            response = self.get_respose_and_log_info(request)
         else:
             response = self.get_response(request)
 
@@ -50,6 +41,18 @@ class RESTRequestLoggingMiddleware:
         except AttributeError:
             pass
         return None
+
+    def get_respose_and_log_info(self, request):
+        data = self._get_request_info(request)
+        start_time = datetime.utcnow()
+        response = self.get_response(request)
+        finish_time = datetime.utcnow()
+        data.update(self._get_response_info(response))
+        apply_hash_filter(data)
+        data.update(self.timing_fields(start_time, finish_time))
+        data.update(self.extra_log_info)
+        log.info("Execution Log", extra=data)
+        return response
 
     def _get_request_info(self, request) -> dict:
         """
