@@ -27,3 +27,10 @@ def find_and_hash_key(data: dict, key_path: tuple):
             data[key_path[-1]] = hash_object(data[key_path[-1]])
     except (KeyError, TypeError):
         pass
+
+
+def exclude_path(path: str) -> bool:
+    for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE:
+        if path.startswith(excluded_path):
+            return True
+    return False

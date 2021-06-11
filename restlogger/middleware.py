@@ -1,9 +1,10 @@
 import json
 import logging
+from datetime import datetime
 from typing import Callable
 
 from .conf import settings
-from .utils import apply_hash_filter
+from .utils import apply_hash_filter, exclude_path
 
 log = logging.getLogger("restlogger")
 
@@ -14,20 +15,29 @@ class RESTRequestLoggingMiddleware:
     Best suited for using with Django REST Framework (DRF)
     """
 
+    extra_log_info = {}
+
     def __init__(self, get_response: Callable):
         self.get_response = get_response
         self.cached_request_body = None
 
     def __call__(self, request):
-        if settings.API_LOGGER_ENABLED:
+
+        should_log = settings.API_LOGGER_ENABLED and not exclude_path(request.path)
+
+        if should_log:
             data = self._get_request_info(request)
-
-        response = self.get_response(request)
-
-        if settings.API_LOGGER_ENABLED:
+            start_time = datetime.utcnow()
+            response = self.get_response(request)
+            finish_time = datetime.utcnow()
             data.update(self._get_response_info(response))
             apply_hash_filter(data)
+            data.update(self.timing_fields(start_time, finish_time))
             log.info("Execution Log", extra=data)
+
+        else:
+            response = self.get_response(request)
+
         return response
 
     def _get_request_info(self, request) -> dict:
@@ -108,3 +118,18 @@ class RESTRequestLoggingMiddleware:
             return response.data
         except AttributeError:
             return {}
+
+    @staticmethod
+    def timing_fields(start_time: datetime, finish_time: datetime) -> dict:
+        """
+        Create timing fields, calculating duration based on start and finish times
+        """
+        duration = finish_time - start_time
+        timing_fields = {
+            "timing": {
+                "start": start_time,
+                "finish": finish_time,
+                "duration": duration.total_seconds(),
+            }
+        }
+        return timing_fields
