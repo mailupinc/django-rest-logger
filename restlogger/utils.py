@@ -1,5 +1,6 @@
 import hashlib
 
+import jwt
 from django.conf import settings
 
 
@@ -30,7 +31,21 @@ def find_and_hash_key(data: dict, key_path: tuple):
 
 
 def exclude_path(path: str) -> bool:
-    for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE:
-        if path.startswith(excluded_path):
-            return True
-    return False
+    """
+    Check if given path is in a list defined on Settings
+    """
+    return any(
+        path.startswith(excluded_path)
+        for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE
+    )
+
+
+def decode_jwt_token_payload(token: str):
+    """
+    Extracts payload from a JWT token
+    """
+    try:
+        payload = jwt.decode(token, options={"verify_signature": False})
+    except ValueError:
+        payload = ""
+    return payload

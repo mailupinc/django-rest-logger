@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Callable, Dict
 
 from .conf import settings
-from .utils import apply_hash_filter, exclude_path
+from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path
 
 log = logging.getLogger("restlogger")
 
@@ -26,11 +26,9 @@ class RESTRequestLoggingMiddleware:
         should_log = settings.API_LOGGER_ENABLED and not exclude_path(request.path)
 
         if should_log:
-            response = self.get_respose_and_log_info(request)
+            return self.get_respose_and_log_info(request)
         else:
-            response = self.get_response(request)
-
-        return response
+            return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         self.extra_log_info = {"extra_info": {}}
@@ -62,8 +60,7 @@ class RESTRequestLoggingMiddleware:
         jwt_payload = None
         headers = {key: value for key, value in request.headers.items()}
         if auth_headers := headers.get("Authorization"):
-            token = self._get_raw_token(auth_headers)
-            jwt_payload = self._get_jwt_payload(token)
+            jwt_payload = self._get_jwt_payload(auth_headers)
         try:
             user = request.user
         except AttributeError:
@@ -83,7 +80,7 @@ class RESTRequestLoggingMiddleware:
     @staticmethod
     def _get_raw_token(auth_headers) -> str:
         """
-        Extracts the JSON web token from the "Authorization" header
+        Extracts the JSON web token from the "Authorization" header if present
         """
         if parts := auth_headers.split():
             if parts[0] not in ("Bearer", "JWT"):
@@ -91,13 +88,13 @@ class RESTRequestLoggingMiddleware:
             return parts[1]
         return ""
 
-    @staticmethod
-    def _get_jwt_payload(token: str) -> dict:
+    def _get_jwt_payload(self, auth_headers) -> dict:
         """
         Extracts JWT payload from the Authorization headers
         """
-        # TODO fake implementation for the moment
-        return {"payload": "data"}
+        token = self._get_raw_token(auth_headers)
+        data = decode_jwt_token_payload(token)
+        return data
 
     def _get_request_body(self) -> dict:
         """
@@ -139,11 +136,10 @@ class RESTRequestLoggingMiddleware:
         Create timing fields, calculating duration based on start and finish times
         """
         duration = finish_time - start_time
-        timing_fields = {
+        return {
             "timing": {
                 "start": start_time,
                 "finish": finish_time,
                 "duration": duration.total_seconds(),
             }
         }
-        return timing_fields
