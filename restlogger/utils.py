@@ -40,12 +40,12 @@ def exclude_path(path: str) -> bool:
     )
 
 
-def decode_jwt_token_payload(token: str):
+def decode_jwt_token_payload(token: str) -> dict:
     """
     Extracts payload from a JWT token
     """
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
     except ValueError:
-        payload = ""
+        payload = {}
     return payload

@@ -5,16 +5,16 @@ description = "Detailed logger for python REST api"
 authors = ["Bee Dev <dev@beefree.io>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-Django = "^3.1.4"
+python = "^3.9"
+Django = "^3.2.4"
 PyJWT = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
-black = "^20.8b1"
+black = "^21.6b0"
 flake8 = "^3.8.4"
 isort = "^5.6.4"
-mypy = "^0.790"
+mypy = "^0.902"
 tox = "^3.20.1"
 coverage = "^5.3.1"
 ipdb = "^0.13.9"
