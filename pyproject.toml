@@ -8,6 +8,7 @@ authors = ["Bee Dev <dev@beefree.io>"]
 python = "^3.8"
 Django = "^3"
 PyJWT = "^2"
+pytest-django = "^4.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

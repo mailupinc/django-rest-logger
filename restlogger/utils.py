@@ -2,6 +2,7 @@ import hashlib
 
 import jwt
 from django.conf import settings
+from jwt.exceptions import DecodeError
 
 
 def apply_hash_filter(data: dict) -> dict:
@@ -46,6 +47,6 @@ def decode_jwt_token_payload(token: str) -> dict:
     """
     try:
         payload = jwt.decode(token, options={"verify_signature": False})
-    except ValueError:
+    except DecodeError:
         payload = {}
     return payload
