@@ -5,9 +5,9 @@ description = "Detailed logger for python REST api"
 authors = ["Bee Dev <dev@beefree.io>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-Django = "^3.2.4"
-PyJWT = "^2.1.0"
+python = "^3.8"
+Django = "^3"
+PyJWT = "^2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
