@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from json import JSONDecodeError
 from typing import Callable, Dict
 
 from .conf import settings
@@ -41,6 +42,9 @@ class RESTRequestLoggingMiddleware:
         return None
 
     def get_respose_and_log_info(self, request):
+        """
+        Collect and filter all data to log, get response and return it
+        """
         data = self._get_request_info(request)
         start_time = datetime.utcnow()
         response = self.get_response(request)
@@ -93,20 +97,18 @@ class RESTRequestLoggingMiddleware:
         Extracts JWT payload from the Authorization headers
         """
         token = self._get_raw_token(auth_headers)
-        data = decode_jwt_token_payload(token)
-        return data
+        return decode_jwt_token_payload(token)
 
     def _get_request_body(self) -> dict:
         """
         Try to get the body of the request, if any
         """
-        # TODO try get request.data then json of request.body then NOT Serialible
         if not self.cached_request_body:
             return {}
         try:
             body = json.loads(self.cached_request_body)
-        except Exception:
-            body = None
+        except JSONDecodeError:
+            body = {"content": self.cached_request_body.decode()}
         return body
 
     def _get_response_info(self, response) -> dict:
@@ -116,7 +118,7 @@ class RESTRequestLoggingMiddleware:
         return {
             "response": {
                 "data": self._get_response_data(response)
-                or "Not a REST Framework response",
+                or "Not a serializable response",
                 "status_code": response.status_code,
             }
         }
