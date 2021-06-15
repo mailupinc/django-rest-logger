@@ -21,6 +21,7 @@ class RESTRequestLoggingMiddleware:
     def __init__(self, get_response: Callable):
         self.get_response = get_response
         self.cached_request_body = None
+        self.request_content_type = None
 
     def __call__(self, request):
 
@@ -63,6 +64,7 @@ class RESTRequestLoggingMiddleware:
         self.cached_request_body = request.body
         jwt_payload = None
         headers = {key: value for key, value in request.headers.items()}
+        self.request_content_type = headers.get("Content-Type")
         if auth_headers := headers.get("Authorization"):
             jwt_payload = self._get_jwt_payload(auth_headers)
         try:
@@ -106,9 +108,12 @@ class RESTRequestLoggingMiddleware:
         if not self.cached_request_body:
             return {}
         try:
-            body = json.loads(self.cached_request_body)
-        except JSONDecodeError:
-            body = {"content": self.cached_request_body.decode()}
+            if self.request_content_type == "application/json":
+                body = json.loads(self.cached_request_body)
+            else:
+                body = {"content": self.cached_request_body.decode()}
+        except (AttributeError, JSONDecodeError):
+            body = {}
         return body
 
     def _get_response_info(self, response) -> dict:
@@ -123,13 +128,18 @@ class RESTRequestLoggingMiddleware:
             }
         }
 
-    def _get_response_data(self, response) -> dict:
+    @staticmethod
+    def _get_response_data(response) -> dict:
         """
-        Try to get 'data' attribute from response , if any
+        Try to get response data
         """
+        response_content_type = response.headers.get("Content-Type")
         try:
-            return response.data
-        except AttributeError:
+            if response_content_type == "application/json":
+                return response.data
+            else:
+                return json.loads(response.content)
+        except (AttributeError, JSONDecodeError):
             return {}
 
     @staticmethod
