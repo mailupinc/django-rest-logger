@@ -57,7 +57,7 @@ def middleware_empty_api_response():
 
 
 @pytest.fixture()
-def API_request_factory():
+def api_request_factory():
     """APIRequestFactory instance"""
     skip_if_no_django()
 

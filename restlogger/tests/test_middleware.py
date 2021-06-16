@@ -1,7 +1,7 @@
 def test_base_logging_with_standard_request(
-    API_request_factory, middleware_empty_django_response, mocked_logger
+    api_request_factory, middleware_empty_django_response, mocked_logger
 ):
-    request = API_request_factory.get("/foo")
+    request = api_request_factory.get("/foo")
     middleware_empty_django_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"
@@ -13,9 +13,9 @@ def test_base_logging_with_standard_request(
 
 
 def test_base_logging_with_api_request(
-    API_request_factory, middleware_empty_api_response, mocked_logger
+    api_request_factory, middleware_empty_api_response, mocked_logger
 ):
-    request = API_request_factory.get("/foo", format="json")
+    request = api_request_factory.get("/foo", format="json")
     middleware_empty_api_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"
