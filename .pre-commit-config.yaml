@@ -30,3 +30,10 @@ repos:
       entry: check-byte-order-marker
       language: pygrep
       types: [python]
+    - id: mypy
+      name: mypy
+      entry: mypy
+      language: python
+      types: [ python ]
+      files: restlogger
+      args: [ "--ignore-missing-imports" ]

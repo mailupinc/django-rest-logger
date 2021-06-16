@@ -1,6 +1,8 @@
 import hashlib
 
+import jwt
 from django.conf import settings
+from jwt.exceptions import DecodeError
 
 
 def apply_hash_filter(data: dict) -> dict:
@@ -27,3 +29,24 @@ def find_and_hash_key(data: dict, key_path: tuple):
             data[key_path[-1]] = hash_object(data[key_path[-1]])
     except (KeyError, TypeError):
         pass
+
+
+def exclude_path(path: str) -> bool:
+    """
+    Check if given path is in a list defined on Settings
+    """
+    return any(
+        path.startswith(excluded_path)
+        for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE
+    )
+
+
+def decode_jwt_token_payload(token: str) -> dict:
+    """
+    Extracts payload from a JWT token
+    """
+    try:
+        payload = jwt.decode(token, options={"verify_signature": False})
+    except DecodeError:
+        payload = {}
+    return payload
