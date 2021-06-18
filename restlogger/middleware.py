@@ -134,12 +134,16 @@ class RESTRequestLoggingMiddleware:
         Try to get response data
         """
         response_content_type = response.headers.get("Content-Type")
-        try:
-            if response_content_type == "application/json":
+        if response_content_type == "application/json":
+            try:
                 return response.data
-            else:
-                return json.loads(response.content)
-        except (AttributeError, JSONDecodeError):
+            except AttributeError:
+                return {}
+        if response_content_type == "application/pdf":
+            return {"content": "PDF bytes response"}
+        try:
+            return json.loads(response.content)
+        except (UnicodeDecodeError, JSONDecodeError):
             return {}
 
     @staticmethod
