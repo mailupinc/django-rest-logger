@@ -6,7 +6,7 @@ authors = ["Bee Dev <dev@beefree.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Django = "^3"
+Django = ">2"
 PyJWT = "^2"
 djangorestframework = "^3"
 
