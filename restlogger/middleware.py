@@ -1,6 +1,7 @@
+import contextlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from json import JSONDecodeError
 from typing import Callable, Dict
 
@@ -24,7 +25,6 @@ class RESTRequestLoggingMiddleware:
         self.request_content_type = None
 
     def __call__(self, request):
-
         should_log = settings.API_LOGGER_ENABLED and not exclude_path(request.path)
 
         if should_log:
@@ -34,12 +34,10 @@ class RESTRequestLoggingMiddleware:
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         self.extra_log_info = {"extra_info": {}}
-        try:
+        with contextlib.suppress(AttributeError):
             self.extra_log_info["extra_info"] = getattr(
                 view_func.view_class, "extra_log_info", {}
             )
-        except AttributeError:
-            pass
         return None
 
     def get_respose_and_log_info(self, request):
@@ -47,9 +45,9 @@ class RESTRequestLoggingMiddleware:
         Collect and filter all data to log, get response and return it
         """
         data = self._get_request_info(request)
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         response = self.get_response(request)
-        finish_time = datetime.utcnow()
+        finish_time = datetime.now(timezone.utc)
         data.update(self._get_response_info(response))
         apply_hash_filter(data)
         data.update(self.timing_fields(start_time, finish_time))
@@ -63,7 +61,7 @@ class RESTRequestLoggingMiddleware:
         """
         self.cached_request_body = request.body
         jwt_payload = None
-        headers = {key: value for key, value in request.headers.items()}
+        headers = dict(request.headers.items())
         self.request_content_type = headers.get("Content-Type")
         if auth_headers := headers.get("Authorization"):
             jwt_payload = self._get_jwt_payload(auth_headers)
@@ -71,7 +69,7 @@ class RESTRequestLoggingMiddleware:
             user = request.user
         except AttributeError:
             user = None
-        request_data = {
+        return {
             "request": {
                 "path": request.get_full_path(),
                 "method": request.method,
@@ -81,7 +79,6 @@ class RESTRequestLoggingMiddleware:
                 "jwt_payload": jwt_payload,
             }
         }
-        return request_data
 
     @staticmethod
     def _get_raw_token(auth_headers) -> str:
@@ -89,9 +86,7 @@ class RESTRequestLoggingMiddleware:
         Extracts the JSON web token from the "Authorization" header if present
         """
         if parts := auth_headers.split():
-            if parts[0] not in ("Bearer", "JWT"):
-                return ""
-            return parts[1]
+            return "" if parts[0] not in ("Bearer", "JWT") else parts[1]
         return ""
 
     def _get_jwt_payload(self, auth_headers) -> dict:

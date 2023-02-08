@@ -1,3 +1,4 @@
+import contextlib
 import hashlib
 
 import jwt
@@ -22,13 +23,11 @@ def find_and_hash_key(data: dict, key_path: tuple):
     """
     Given a dict and a path to a key (as a tuple), calls the hashing utility on it
     """
-    try:
+    with contextlib.suppress(KeyError, TypeError):
         for key in key_path[:-1]:
             data = data[key]
         if data[key_path[-1]]:
             data[key_path[-1]] = hash_object(data[key_path[-1]])
-    except (KeyError, TypeError):
-        pass
 
 
 def exclude_path(path: str) -> bool:
