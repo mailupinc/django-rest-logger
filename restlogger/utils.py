@@ -34,10 +34,7 @@ def exclude_path(path: str) -> bool:
     """
     Check if given path is in a list defined on Settings
     """
-    return any(
-        path.startswith(excluded_path)
-        for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE
-    )
+    return any(path.startswith(excluded_path) for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE)
 
 
 def decode_jwt_token_payload(token: str) -> dict:

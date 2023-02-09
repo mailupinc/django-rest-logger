@@ -18,6 +18,7 @@ class RESTRequestLoggingMiddleware:
     """
 
     extra_log_info: Dict[dict, dict] = {}
+    view_name: str = ""
 
     def __init__(self, get_response: Callable):
         self.get_response = get_response
@@ -33,11 +34,10 @@ class RESTRequestLoggingMiddleware:
             return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        self.extra_log_info = {"extra_info": {}}
         with contextlib.suppress(AttributeError):
-            self.extra_log_info["extra_info"] = getattr(
-                view_func.view_class, "extra_log_info", {}
-            )
+            self.extra_log_info["task_info"] = getattr(view_func.view_class, "task_info", {})
+            self.extra_log_info["log_steps"] = getattr(view_func.view_class, "task_info", {})
+            self.extra_log_info["timing_steps"] = getattr(view_func.view_class, "task_info", {})
         return None
 
     def get_respose_and_log_info(self, request):
@@ -50,7 +50,7 @@ class RESTRequestLoggingMiddleware:
         finish_time = datetime.now(timezone.utc)
         data.update(self._get_response_info(response))
         apply_hash_filter(data)
-        data.update(self.timing_fields(start_time, finish_time))
+        data.update(self.execution_fields(request, start_time, finish_time))
         data.update(self.extra_log_info)
         log.info("Execution Log", extra=data)
         return response
@@ -71,7 +71,7 @@ class RESTRequestLoggingMiddleware:
             user = None
         return {
             "request": {
-                "path": request.get_full_path(),
+                "url": request.get_full_path(),
                 "method": request.method,
                 "headers": headers,
                 "body": self._get_request_body(),
@@ -117,8 +117,7 @@ class RESTRequestLoggingMiddleware:
         """
         return {
             "response": {
-                "data": self._get_response_data(response)
-                or "Not a serializable response",
+                "data": self._get_response_data(response) or "Not a serializable response",
                 "status_code": response.status_code,
             }
         }
@@ -150,7 +149,19 @@ class RESTRequestLoggingMiddleware:
         return {
             "timing": {
                 "start": start_time,
-                "finish": finish_time,
+                "end": finish_time,
                 "duration": duration.total_seconds(),
             }
         }
+
+    def execution_fields(self, request, start_time: datetime, finish_time: datetime) -> dict:
+        """
+        Create execution field
+        """
+        try:
+            name = request.resolver_match.view_name
+        except AttributeError:
+            name = ""
+        execution = {"app": settings.API_LOGGER_APP_NAME, "name": name}
+        execution.update(self.timing_fields(start_time, finish_time))
+        return {"execution": execution}
