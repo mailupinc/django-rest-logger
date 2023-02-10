@@ -33,13 +33,6 @@ class RESTRequestLoggingMiddleware:
         else:
             return self.get_response(request)
 
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        with contextlib.suppress(AttributeError):
-            self.extra_log_info["task_info"] = getattr(view_func.view_class, "task_info", {})
-            self.extra_log_info["log_steps"] = getattr(view_func.view_class, "task_info", {})
-            self.extra_log_info["timing_steps"] = getattr(view_func.view_class, "task_info", {})
-        return None
-
     def get_respose_and_log_info(self, request):
         """
         Collect and filter all data to log, get response and return it
@@ -51,7 +44,8 @@ class RESTRequestLoggingMiddleware:
         data.update(self._get_response_info(response))
         apply_hash_filter(data)
         data.update(self.execution_fields(request, start_time, finish_time))
-        data.update(self.extra_log_info)
+        with contextlib.suppress(AttributeError):
+            data.update(request.execution_log_info)
         log.info("Execution Log", extra=data)
         return response
 
@@ -85,9 +79,8 @@ class RESTRequestLoggingMiddleware:
         """
         Extracts the JSON web token from the "Authorization" header if present
         """
-        if parts := auth_headers.split():
-            return "" if parts[0] not in ("Bearer", "JWT") else parts[1]
-        return ""
+        parts = auth_headers.split()
+        return "" if parts[0] not in ("Bearer", "JWT") else parts[1]
 
     def _get_jwt_payload(self, auth_headers) -> dict:
         """

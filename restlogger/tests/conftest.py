@@ -39,6 +39,18 @@ def get_simple_api_response(request):
     return response.render()
 
 
+def get_pdf_api_response(request):
+    from rest_framework.renderers import JSONRenderer
+    from rest_framework.response import Response
+
+    response = Response(data={"content": "A simple API response"})
+    response.accepted_renderer = JSONRenderer()
+    response.accepted_media_type = "application/pdf"
+    response.content_type = "application/pdf"
+    response.renderer_context = {}
+    return response.render()
+
+
 @pytest.fixture()
 def middleware_empty_django_response():
     skip_if_no_django()
@@ -58,6 +70,15 @@ def middleware_empty_api_response():
 
 
 @pytest.fixture()
+def middleware_pdf_api_response():
+    skip_if_no_django()
+
+    from restlogger.middleware import RESTRequestLoggingMiddleware
+
+    yield RESTRequestLoggingMiddleware(get_pdf_api_response)
+
+
+@pytest.fixture()
 def api_request_factory():
     """APIRequestFactory instance"""
     skip_if_no_django()
@@ -65,6 +86,16 @@ def api_request_factory():
     from rest_framework.test import APIRequestFactory
 
     yield APIRequestFactory()
+
+
+@pytest.fixture()
+def standard_request_factory():
+    """APIRequestFactory instance"""
+    skip_if_no_django()
+
+    from django.test import RequestFactory
+
+    yield RequestFactory()
 
 
 @pytest.fixture
