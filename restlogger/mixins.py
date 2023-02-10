@@ -1,10 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class LogStep:
     msg: str
-    detail: dict = {}
+    detail: dict = field(default_factory=dict)
 
     def __str__(self):
         return self.msg
