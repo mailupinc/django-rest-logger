@@ -249,3 +249,26 @@ def test_skip_log_if_path_is_excluded(standard_request_factory, middleware_empty
     request = standard_request_factory.get("/path1/", format="json")
     middleware_empty_api_response(request)
     mocked_logger.assert_not_called()
+
+
+def test_logging_with_api_post__mask_sensitive_data(api_request_factory, middleware_empty_api_response, mocked_logger):
+    payload = {
+        "user": "myuser",
+        "password": "mypassword",
+        "nested_1": {
+            "user": "myuser",
+            "password_old": "mypassword",
+            "nested_2": {"user": "myuser", "new_password": "mypassword"},
+        },
+        "passwords_list": ["mypassword", "mypassword2", "mypassword3"],
+    }
+    request = api_request_factory.patch("/foo/", data=payload, format="json")
+    middleware_empty_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]
+    request_body = kwargs["extra"]["request"]["body"]
+    assert request_body["password"] == "***FILTERED***"
+    assert request_body["nested_1"]["password_old"] == "***FILTERED***"
+    assert request_body["nested_1"]["nested_2"]["new_password"] == "***FILTERED***"
+    assert request_body["passwords_list"] == ["***FILTERED***", "***FILTERED***", "***FILTERED***"]

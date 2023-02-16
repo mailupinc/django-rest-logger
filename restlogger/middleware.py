@@ -6,7 +6,7 @@ from json import JSONDecodeError
 from typing import Callable, Dict
 
 from .conf import settings
-from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path
+from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path, mask_sensitive_data
 
 log = logging.getLogger("restlogger")
 
@@ -102,6 +102,7 @@ class RESTRequestLoggingMiddleware:
                 body = {"content": self.cached_request_body.decode()}
         except (AttributeError, JSONDecodeError):
             body = {}
+        mask_sensitive_data(body)
         return body
 
     def _get_response_info(self, response) -> dict:

@@ -15,6 +15,22 @@ def apply_hash_filter(data: dict) -> dict:
     return data
 
 
+def mask_sensitive_data(data: dict) -> dict:
+    """
+    Iterates over data dict and mask any key that contains one of sensitive keys defined in settings
+    """
+
+    for key, value in data.items():
+        if any(sensitive_key in key for sensitive_key in settings.API_LOGGER_SENSITIVE_KEYS):
+            if isinstance(value, list):
+                data[key] = ["***FILTERED***" for item in data[key]]
+            else:
+                data[key] = "***FILTERED***"
+        if isinstance(value, dict):
+            mask_sensitive_data(value)
+    return data
+
+
 def hash_object(object) -> str:
     return "Hash " + hashlib.md5(str(object).encode("utf-8")).hexdigest()
 
