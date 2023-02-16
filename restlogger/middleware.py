@@ -44,7 +44,8 @@ class RESTRequestLoggingMiddleware:
         finish_time = datetime.now(timezone.utc)
         data = self._get_request_info(request)
         data.update(self._get_response_info(response))
-        data.update(self.execution_fields(request, start_time, finish_time))
+        data.update(self._get_execution_fields(request, start_time, finish_time))
+        data.update(self._get_info_fields())
         apply_hash_filter(data)
         with contextlib.suppress(AttributeError):
             data.update(request.execution_log_info)
@@ -139,7 +140,7 @@ class RESTRequestLoggingMiddleware:
             return {}
 
     @staticmethod
-    def timing_fields(start_time: datetime, finish_time: datetime) -> dict:
+    def _timing_fields(start_time: datetime, finish_time: datetime) -> dict:
         """
         Create timing fields, calculating duration based on start and finish times
         """
@@ -152,14 +153,23 @@ class RESTRequestLoggingMiddleware:
             }
         }
 
-    def execution_fields(self, request, start_time: datetime, finish_time: datetime) -> dict:
+    def _get_execution_fields(self, request, start_time: datetime, finish_time: datetime) -> dict:
         """
-        Create execution field
+        Create execution fields
         """
         try:
             name = request.resolver_match.view_name
         except AttributeError:
             name = ""
         execution = {"app": settings.API_LOGGER_APP_NAME, "name": name}
-        execution.update(self.timing_fields(start_time, finish_time))
+        execution.update(self._timing_fields(start_time, finish_time))
         return {"execution": execution}
+
+    @staticmethod
+    def _get_info_fields() -> dict:
+        """
+        Create info fields
+        """
+        info = {"git_sha": getattr(settings, "GIT_SHA", ""), "git_tag": getattr(settings, "GIT_TAG", "")}
+        cleaned_info = {key: value for key, value in info.items() if value}
+        return {"info": cleaned_info}

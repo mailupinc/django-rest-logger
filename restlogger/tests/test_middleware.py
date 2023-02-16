@@ -28,6 +28,7 @@ def test_base_logging_with_standard_get_request(
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_api_get_request(api_request_factory, middleware_empty_api_response, mocked_logger):
@@ -47,6 +48,7 @@ def test_base_logging_with_api_get_request(api_request_factory, middleware_empty
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_api_get_request_pdf_response(
@@ -90,6 +92,7 @@ def test_base_logging_with_api_post_request(api_request_factory, middleware_empt
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_standard_post_request(
@@ -117,6 +120,7 @@ def test_base_logging_with_standard_post_request(
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_api_patch_request(api_request_factory, middleware_empty_api_response, mocked_logger):
@@ -138,6 +142,7 @@ def test_base_logging_with_api_patch_request(api_request_factory, middleware_emp
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_standard_patch_request(
@@ -162,6 +167,7 @@ def test_base_logging_with_standard_patch_request(
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_api_delete_request(api_request_factory, middleware_empty_api_response, mocked_logger):
@@ -183,6 +189,7 @@ def test_base_logging_with_api_delete_request(api_request_factory, middleware_em
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_standard_delete_request(
@@ -207,6 +214,7 @@ def test_base_logging_with_standard_delete_request(
     assert kwargs["extra"]["execution"]["timing"]["start"]
     assert kwargs["extra"]["execution"]["timing"]["end"]
     assert kwargs["extra"]["execution"]["timing"]["duration"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_api_request_jwt_ok(api_request_factory, middleware_empty_api_response, mocked_logger):
@@ -272,3 +280,29 @@ def test_logging_with_api_post__mask_sensitive_data(api_request_factory, middlew
     assert request_body["nested_1"]["password_old"] == "***FILTERED***"
     assert request_body["nested_1"]["nested_2"]["new_password"] == "***FILTERED***"
     assert request_body["passwords_list"] == ["***FILTERED***", "***FILTERED***", "***FILTERED***"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
+
+
+def test_logging_with_api_get__no_git_sha_tag(
+    settings, api_request_factory, middleware_empty_api_response, mocked_logger
+):
+    delattr(settings, "GIT_SHA")
+    delattr(settings, "GIT_TAG")
+    request = api_request_factory.get("/foo", format="json")
+    middleware_empty_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]
+    assert kwargs["extra"]["info"] == {}
+
+
+def test_logging_with_api_get__only_git_sha(
+    settings, api_request_factory, middleware_empty_api_response, mocked_logger
+):
+    delattr(settings, "GIT_TAG")
+    request = api_request_factory.get("/foo", format="json")
+    middleware_empty_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]
+    assert kwargs["extra"]["info"] == {"git_sha": "a-sha"}

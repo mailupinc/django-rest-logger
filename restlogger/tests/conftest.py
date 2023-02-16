@@ -29,6 +29,8 @@ def pytest_configure():
             "django.contrib.auth",
             "django.contrib.contenttypes",
         ],
+        GIT_TAG="a-tag",
+        GIT_SHA="a-sha",
     )
 
 
