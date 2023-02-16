@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import json
 import logging
 from datetime import datetime, timezone
@@ -37,23 +38,26 @@ class RESTRequestLoggingMiddleware:
         """
         Collect and filter all data to log, get response and return it
         """
-        data = self._get_request_info(request)
+        self._cache_request_body(request)
         start_time = datetime.now(timezone.utc)
         response = self.get_response(request)
         finish_time = datetime.now(timezone.utc)
+        data = self._get_request_info(request)
         data.update(self._get_response_info(response))
-        apply_hash_filter(data)
         data.update(self.execution_fields(request, start_time, finish_time))
+        apply_hash_filter(data)
         with contextlib.suppress(AttributeError):
             data.update(request.execution_log_info)
         log.info("Execution Log", extra=data)
         return response
 
+    def _cache_request_body(self, request):
+        self.cached_request_body = copy.copy(request.body)
+
     def _get_request_info(self, request) -> dict:
         """
         Extracts info from a request (Django or DRF request object)
         """
-        self.cached_request_body = request.body
         jwt_payload = None
         headers = dict(request.headers.items())
         self.request_content_type = headers.get("Content-Type")
