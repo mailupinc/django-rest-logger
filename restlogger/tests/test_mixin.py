@@ -6,7 +6,6 @@ from restlogger.middleware import RESTRequestLoggingMiddleware
 
 @pytest.mark.freeze_time("2023-01-01", auto_tick_seconds=0.1)
 def test_execution_log_mixin_standard(standard_request_factory, standard_view_with_mixin, mocked_logger):
-    mocked_logger.reset_mock()
     request = standard_request_factory.get("/foo")
     get_response = standard_view_with_mixin.as_view()
     middleware = RESTRequestLoggingMiddleware(get_response)
@@ -35,7 +34,6 @@ def test_execution_log_mixin_standard(standard_request_factory, standard_view_wi
 
 @pytest.mark.freeze_time("2023-01-01", auto_tick_seconds=0.2)
 def test_execution_log_mixin_api(api_request_factory, api_view_with_mixin, mocked_logger):
-    mocked_logger.reset_mock()
     request = api_request_factory.get("/foo")
     get_response = api_view_with_mixin.as_view()
     middleware = RESTRequestLoggingMiddleware(get_response)
