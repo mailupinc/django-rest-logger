@@ -5,22 +5,30 @@ description = "Detailed logger for python REST api"
 authors = ["Bee Dev <dev@beefree.io>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 Django = ">2"
 PyJWT = "^2"
 djangorestframework = "^3"
 
-[tool.poetry.dev-dependencies]
-pytest = "^6"
-flake8 = "^3"
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+flake8 = "^6.0.0"
 isort = "^5"
-mypy = "^0.902"
-tox = "^3"
-coverage = "^5"
+mypy = "^1.0.0"
+tox = "^4.4.5"
+coverage = "^7.1.0"
 ipdb = "^0.13"
 pytest-django = "^4"
-black = "^21.6b0"
+black = "^23.1.0"
+mypy-extensions = "^1.0.0"
+pre-commit = "^3.0.4"
+pytest-cov = "^4.0.0"
+pytest-freezegun = "^0.4.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+target-version = ['py39']
+line-length = 119

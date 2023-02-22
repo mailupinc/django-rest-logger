@@ -1,11 +1,13 @@
+import contextlib
+import copy
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from json import JSONDecodeError
 from typing import Callable, Dict
 
 from .conf import settings
-from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path
+from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path, mask_sensitive_data
 
 log = logging.getLogger("restlogger")
 
@@ -17,6 +19,7 @@ class RESTRequestLoggingMiddleware:
     """
 
     extra_log_info: Dict[dict, dict] = {}
+    view_name: str = ""
 
     def __init__(self, get_response: Callable):
         self.get_response = get_response
@@ -24,7 +27,6 @@ class RESTRequestLoggingMiddleware:
         self.request_content_type = None
 
     def __call__(self, request):
-
         should_log = settings.API_LOGGER_ENABLED and not exclude_path(request.path)
 
         if should_log:
@@ -32,38 +34,33 @@ class RESTRequestLoggingMiddleware:
         else:
             return self.get_response(request)
 
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        self.extra_log_info = {"extra_info": {}}
-        try:
-            self.extra_log_info["extra_info"] = getattr(
-                view_func.view_class, "extra_log_info", {}
-            )
-        except AttributeError:
-            pass
-        return None
-
     def get_respose_and_log_info(self, request):
         """
         Collect and filter all data to log, get response and return it
         """
-        data = self._get_request_info(request)
-        start_time = datetime.utcnow()
+        self._cache_request_body(request)
+        start_time = datetime.now(timezone.utc)
         response = self.get_response(request)
-        finish_time = datetime.utcnow()
+        finish_time = datetime.now(timezone.utc)
+        data = self._get_request_info(request)
         data.update(self._get_response_info(response))
+        data.update(self._get_execution_fields(request, start_time, finish_time))
+        data.update(self._get_info_fields())
         apply_hash_filter(data)
-        data.update(self.timing_fields(start_time, finish_time))
-        data.update(self.extra_log_info)
+        with contextlib.suppress(AttributeError):
+            data.update(request.execution_log_info)
         log.info("Execution Log", extra=data)
         return response
+
+    def _cache_request_body(self, request):
+        self.cached_request_body = copy.copy(request.body)
 
     def _get_request_info(self, request) -> dict:
         """
         Extracts info from a request (Django or DRF request object)
         """
-        self.cached_request_body = request.body
         jwt_payload = None
-        headers = {key: value for key, value in request.headers.items()}
+        headers = dict(request.headers.items())
         self.request_content_type = headers.get("Content-Type")
         if auth_headers := headers.get("Authorization"):
             jwt_payload = self._get_jwt_payload(auth_headers)
@@ -71,9 +68,9 @@ class RESTRequestLoggingMiddleware:
             user = request.user
         except AttributeError:
             user = None
-        request_data = {
+        return {
             "request": {
-                "path": request.get_full_path(),
+                "url": request.get_full_path(),
                 "method": request.method,
                 "headers": headers,
                 "body": self._get_request_body(),
@@ -81,18 +78,14 @@ class RESTRequestLoggingMiddleware:
                 "jwt_payload": jwt_payload,
             }
         }
-        return request_data
 
     @staticmethod
     def _get_raw_token(auth_headers) -> str:
         """
         Extracts the JSON web token from the "Authorization" header if present
         """
-        if parts := auth_headers.split():
-            if parts[0] not in ("Bearer", "JWT"):
-                return ""
-            return parts[1]
-        return ""
+        parts = auth_headers.split()
+        return "" if parts[0] not in ("Bearer", "JWT") else parts[1]
 
     def _get_jwt_payload(self, auth_headers) -> dict:
         """
@@ -114,6 +107,7 @@ class RESTRequestLoggingMiddleware:
                 body = {"content": self.cached_request_body.decode()}
         except (AttributeError, JSONDecodeError):
             body = {}
+        mask_sensitive_data(body)
         return body
 
     def _get_response_info(self, response) -> dict:
@@ -122,8 +116,7 @@ class RESTRequestLoggingMiddleware:
         """
         return {
             "response": {
-                "data": self._get_response_data(response)
-                or "Not a serializable response",
+                "data": self._get_response_data(response) or "Not a serializable response",
                 "status_code": response.status_code,
             }
         }
@@ -147,7 +140,7 @@ class RESTRequestLoggingMiddleware:
             return {}
 
     @staticmethod
-    def timing_fields(start_time: datetime, finish_time: datetime) -> dict:
+    def _timing_fields(start_time: datetime, finish_time: datetime) -> dict:
         """
         Create timing fields, calculating duration based on start and finish times
         """
@@ -155,7 +148,28 @@ class RESTRequestLoggingMiddleware:
         return {
             "timing": {
                 "start": start_time,
-                "finish": finish_time,
+                "end": finish_time,
                 "duration": duration.total_seconds(),
             }
         }
+
+    def _get_execution_fields(self, request, start_time: datetime, finish_time: datetime) -> dict:
+        """
+        Create execution fields
+        """
+        try:
+            name = request.resolver_match.view_name
+        except AttributeError:
+            name = ""
+        execution = {"app": settings.API_LOGGER_APP_NAME, "name": name}
+        execution.update(self._timing_fields(start_time, finish_time))
+        return {"execution": execution}
+
+    @staticmethod
+    def _get_info_fields() -> dict:
+        """
+        Create info fields
+        """
+        info = {"git_sha": getattr(settings, "GIT_SHA", ""), "git_tag": getattr(settings, "GIT_TAG", "")}
+        cleaned_info = {key: value for key, value in info.items() if value}
+        return {"info": cleaned_info}

@@ -1,3 +1,4 @@
+import contextlib
 import hashlib
 
 import jwt
@@ -14,6 +15,22 @@ def apply_hash_filter(data: dict) -> dict:
     return data
 
 
+def mask_sensitive_data(data: dict) -> dict:
+    """
+    Iterates over data dict and mask any key that contains one of sensitive keys defined in settings
+    """
+
+    for key, value in data.items():
+        if any(sensitive_key in key for sensitive_key in settings.API_LOGGER_SENSITIVE_KEYS):
+            if isinstance(value, list):
+                data[key] = ["***FILTERED***" for item in data[key]]
+            else:
+                data[key] = "***FILTERED***"
+        if isinstance(value, dict):
+            mask_sensitive_data(value)
+    return data
+
+
 def hash_object(object) -> str:
     return "Hash " + hashlib.md5(str(object).encode("utf-8")).hexdigest()
 
@@ -22,23 +39,18 @@ def find_and_hash_key(data: dict, key_path: tuple):
     """
     Given a dict and a path to a key (as a tuple), calls the hashing utility on it
     """
-    try:
+    with contextlib.suppress(KeyError, TypeError):
         for key in key_path[:-1]:
             data = data[key]
         if data[key_path[-1]]:
             data[key_path[-1]] = hash_object(data[key_path[-1]])
-    except (KeyError, TypeError):
-        pass
 
 
 def exclude_path(path: str) -> bool:
     """
     Check if given path is in a list defined on Settings
     """
-    return any(
-        path.startswith(excluded_path)
-        for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE
-    )
+    return any(path.startswith(excluded_path) for excluded_path in settings.API_LOGGER_URL_PATH_TO_EXCLUDE)
 
 
 def decode_jwt_token_payload(token: str) -> dict:
