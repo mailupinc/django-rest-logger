@@ -53,6 +53,7 @@ class RESTRequestLoggingMiddleware:
         return response
 
     def _cache_request_body(self, request):
+        """Store a copy of the request.body, since it can be consumed only once"""
         self.cached_request_body = copy.copy(request.body)
 
     def _get_request_info(self, request) -> dict:
@@ -140,15 +141,15 @@ class RESTRequestLoggingMiddleware:
             return {}
 
     @staticmethod
-    def _timing_fields(start_time: datetime, finish_time: datetime) -> dict:
+    def _timing_fields(start_time: datetime, end_time: datetime) -> dict:
         """
-        Create timing fields, calculating duration based on start and finish times
+        Create timing fields, calculating duration based on start and end times
         """
-        duration = finish_time - start_time
+        duration = end_time - start_time
         return {
             "timing": {
                 "start": start_time,
-                "end": finish_time,
+                "end": end_time,
                 "duration": duration.total_seconds(),
             }
         }

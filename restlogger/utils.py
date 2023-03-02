@@ -1,5 +1,6 @@
 import contextlib
 import hashlib
+from typing import Union
 
 import jwt
 from django.conf import settings
@@ -15,11 +16,20 @@ def apply_hash_filter(data: dict) -> dict:
     return data
 
 
-def mask_sensitive_data(data: dict) -> dict:
+def mask_sensitive_data(data: Union[dict, list]) -> Union[dict, list]:
     """
     Iterates over data dict and mask any key that contains one of sensitive keys defined in settings
     """
+    if isinstance(data, dict):
+        return mask_sensitive_data_dict(data)
+    if isinstance(data, list):
+        for item in data:
+            mask_sensitive_data(item)
+        return data
+    return data
 
+
+def mask_sensitive_data_dict(data: dict) -> dict:
     for key, value in data.items():
         if any(sensitive_key in key for sensitive_key in settings.API_LOGGER_SENSITIVE_KEYS):
             if isinstance(value, list):
