@@ -18,7 +18,7 @@ def apply_hash_filter(data: dict) -> dict:
 
 def mask_sensitive_data(data: Union[dict, list]) -> Union[dict, list]:
     """
-    Iterates over data dict and mask any key that contains one of sensitive keys defined in settings
+    Recursive function to apply the mask function on different data types
     """
     if isinstance(data, dict):
         return mask_sensitive_data_dict(data)
@@ -30,6 +30,9 @@ def mask_sensitive_data(data: Union[dict, list]) -> Union[dict, list]:
 
 
 def mask_sensitive_data_dict(data: dict) -> dict:
+    """
+    Iterates over data dict and mask any key that contains one of sensitive keys defined in settings
+    """
     for key, value in data.items():
         if any(sensitive_key in key for sensitive_key in settings.API_LOGGER_SENSITIVE_KEYS):
             if isinstance(value, list):
