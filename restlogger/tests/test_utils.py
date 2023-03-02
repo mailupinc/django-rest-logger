@@ -1,4 +1,4 @@
-from restlogger.utils import apply_hash_filter, decode_jwt_token_payload, exclude_path
+from restlogger.utils import apply_hash_filter, decode_jwt_token_payload, exclude_path, mask_sensitive_data
 
 
 def test_decode_jwt_token_payload_ok():
@@ -58,3 +58,45 @@ def test_do_not_apply_hash_filter_if_path_is_empty():
         "path": {"to": {"hash": ""}},
         "another": {"path": {"not to hash": "other value"}},
     }
+
+
+def test_mask_sensitive_data_ok_if_dict():
+    data = {
+        "user": "myuser",
+        "password": "mypassword",
+    }
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == {
+        "user": "myuser",
+        "password": "***FILTERED***",
+    }
+
+
+def test_mask_sensitive_data_ok_if_list():
+    data = [
+        {"user": "myuser1", "password": "mypassword1"},
+        {"user": "myuser2", "password": "mypassword2"},
+        {"nested_1": {"user": "myuser", "password_old": "mypassword"}},
+    ]
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == [
+        {"user": "myuser1", "password": "***FILTERED***"},
+        {"user": "myuser2", "password": "***FILTERED***"},
+        {"nested_1": {"user": "myuser", "password_old": "***FILTERED***"}},
+    ]
+
+
+def test_mask_sensitive_data_ok_if_string():
+    data = "astring"
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == "astring"
+
+
+def test_mask_sensitive_data_ok_if_int():
+    data = 122
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == 122

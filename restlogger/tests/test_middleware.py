@@ -283,6 +283,29 @@ def test_logging_with_api_post__mask_sensitive_data(api_request_factory, middlew
     assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
+def test_logging_with_api_post__mask_sensitive_data_ok_if_list(
+    api_request_factory, middleware_empty_api_response, mocked_logger
+):
+    payload = [
+        {"user": "myuser1", "password": "mypassword1"},
+        "astring",
+        {"nested_1": {"user": "myuser", "password_old": "mypassword"}},
+        42,
+    ]
+    request = api_request_factory.patch("/foo/", data=payload, format="json")
+    middleware_empty_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]
+    request_body = kwargs["extra"]["request"]["body"]
+    assert request_body == [
+        {"user": "myuser1", "password": "***FILTERED***"},
+        "astring",
+        {"nested_1": {"user": "myuser", "password_old": "***FILTERED***"}},
+        42,
+    ]
+
+
 def test_logging_with_api_get__no_git_sha_tag(
     settings, api_request_factory, middleware_empty_api_response, mocked_logger
 ):
