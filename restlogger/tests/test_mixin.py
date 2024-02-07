@@ -1,5 +1,6 @@
 import pytest
 from rest_framework import status
+import django
 
 from restlogger.middleware import RESTRequestLoggingMiddleware
 

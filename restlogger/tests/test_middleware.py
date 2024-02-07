@@ -98,17 +98,14 @@ def test_base_logging_with_api_post_request(api_request_factory, middleware_empt
 def test_base_logging_with_standard_post_request(
     standard_request_factory, middleware_empty_django_response, mocked_logger
 ):
-    request = standard_request_factory.post("/foo/", {"key": "value"}, format="json")
+    request = standard_request_factory.post("/foo/", {"key": "value"})
     middleware_empty_django_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"
     assert kwargs["extra"]
     assert kwargs["extra"]["request"]["url"] == "/foo/"
     assert kwargs["extra"]["request"]["method"] == "POST"
-    assert kwargs["extra"]["request"]["body"] == {
-        "content": "--BoUnDaRyStRiNg\r\nContent-Disposition: "
-        'form-data; name="key"\r\n\r\nvalue\r\n--BoUnDaRyStRiNg--\r\n'
-    }
+    assert kwargs["extra"]["request"]["body"] == "Not a JSON body"
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 200
@@ -148,14 +145,14 @@ def test_base_logging_with_api_patch_request(api_request_factory, middleware_emp
 def test_base_logging_with_standard_patch_request(
     standard_request_factory, middleware_empty_django_response, mocked_logger
 ):
-    request = standard_request_factory.patch("/foo/", {"key": "value"}, format="json")
+    request = standard_request_factory.patch("/foo/", {"key": "value"})
     middleware_empty_django_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"
     assert kwargs["extra"]
     assert kwargs["extra"]["request"]["url"] == "/foo/"
     assert kwargs["extra"]["request"]["method"] == "PATCH"
-    assert kwargs["extra"]["request"]["body"] == {"content": "{'key': 'value'}"}
+    assert kwargs["extra"]["request"]["body"] == "Not a JSON body"
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 200
@@ -195,7 +192,7 @@ def test_base_logging_with_api_delete_request(api_request_factory, middleware_em
 def test_base_logging_with_standard_delete_request(
     standard_request_factory, middleware_empty_django_response, mocked_logger
 ):
-    request = standard_request_factory.delete("/foo/", format="json")
+    request = standard_request_factory.delete("/foo/")
     middleware_empty_django_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"

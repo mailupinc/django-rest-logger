@@ -1,12 +1,14 @@
 from unittest import mock
 
 import pytest
+import django
 from django.conf import settings
 from django.http import HttpResponse
 from pytest_django.lazy_django import skip_if_no_django
 
 import restlogger
 from restlogger.mixins import ExecutionLogMixin
+
 
 
 def pytest_configure():
@@ -32,6 +34,7 @@ def pytest_configure():
         GIT_TAG="a-tag",
         GIT_SHA="a-sha",
     )
+    django.setup()
 
 
 def get_simple_django_response(request):

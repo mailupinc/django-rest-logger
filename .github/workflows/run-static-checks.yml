@@ -1,0 +1,37 @@
+# This workflow will run static chekc inside a tox environment
+
+name: Python Static Checks
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+      -
+jobs:
+  static-checks:
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+          poetry --version
+
+      - name: Install Nox
+        run: |
+          pip install nox nox-poetry
+          nox --version
+
+      - name: Run static checks  with nox
+        run: |
+          nox

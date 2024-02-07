@@ -5,30 +5,72 @@ description = "Detailed logger for python REST api"
 authors = ["Bee Dev <dev@beefree.io>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-Django = ">2"
+python = "^3.10"
+Django = ">3"
 PyJWT = "^2"
-djangorestframework = "^3"
+djangorestframework = ">3"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.2.1"
-flake8 = "^6.0.0"
-isort = "^5"
+pytest = "^8.0.0"
 mypy = "^1.0.0"
-tox = "^4.4.5"
 coverage = "^7.1.0"
 ipdb = "^0.13"
 pytest-django = "^4"
-black = "^23.1.0"
+black = "^24.1.1"
 mypy-extensions = "^1.0.0"
 pre-commit = "^3.0.4"
 pytest-cov = "^4.0.0"
 pytest-freezegun = "^0.4.2"
+ruff = "^0.2.1"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+
 [tool.black]
-target-version = ['py39']
+target-version = ['py310']
 line-length = 119
+
+
+[tool.ruff]
+line-length = 119
+exclude = [
+    "__pycache__",
+    ".git",
+    ".nox",
+    "doc",
+]
+
+
+[tool.mypy]
+python_version = '3.10'
+packages =["restlogger",]
+
+[[tool.mypy.overrides]]
+module = [
+    "nox",
+    "nox_poetry",
+]
+ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+addopts = "-ra -v"
+testpaths = ["tests",]
+asyncio_mode = "auto"
+
+[tool.pytest_env]
+ENV_PATH=".envs/test.env"
+BEE_ENV="test"
+
+[tool.coverage.paths]
+source = ["restlogger"]
+
+[tool.coverage.run]
+branch = true
+source = ["restlogger"]
+
+[tool.coverage.report]
+show_missing = true
