@@ -10,7 +10,6 @@ import restlogger
 from restlogger.mixins import ExecutionLogMixin
 
 
-
 def pytest_configure():
     settings.configure(
         API_LOGGER_URL_PATH_TO_EXCLUDE=("/path1/",),

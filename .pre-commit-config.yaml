@@ -1,39 +1,30 @@
 default_language_version:
     python: python3
 repos:
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+    -   id: pyupgrade
+
 -   repo: local
     hooks:
+
+    - id: ruff
+      name: ruff
+      entry: ruff
+      language: python
+      types: [ python ]
+      args: [ --fix, --exit-non-zero-on-fix ]
     - id: black
       name: black
       entry: black
       language: python
       types: [python]
-    - id: flake8
-      name: flake8
-      entry: flake8
-      language: python
-      types: [python]
-    - id: isort
-      name: isort
-      entry: isort
-      language: python
-      types: [python]
-    - id: python-no-ipdb
-      name: check for ipdb in code
-      description: 'A quick check for the `ipdb` invokation'
-      entry: '^\s*[^#].*ipdb'
-      language: pygrep
-      types: [python]
-    - id: check-byte-order-marker
-      name: check-byte-order-marker
-      description: 'Forbid files which have a UTF-8 byte-order marker'
-      entry: check-byte-order-marker
-      language: pygrep
-      types: [python]
     - id: mypy
       name: mypy
       entry: mypy
       language: python
+      files: restlogger/
       types: [ python ]
-      files: restlogger
-      args: [ "--ignore-missing-imports" ]
+      args: ["--config-file=pyproject.toml", "--ignore-missing-imports"]

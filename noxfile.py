@@ -29,6 +29,7 @@ nox.options.sessions = (
 @session(name="lint", python=python_versions)
 def lint(session: Session) -> None:
     """Check cod style with black, flake8, isort"""
+    session.run_always("poetry", "install", external=True)
     args = session.posargs or ["."]
     session.install(
         "black",
@@ -41,6 +42,7 @@ def lint(session: Session) -> None:
 @session(python=python_versions)
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
+    session.run_always("poetry", "install", external=True)
     args = ["--ignore-missing-imports"]
     session.install("mypy")
     session.run("mypy", *args)

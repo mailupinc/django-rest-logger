@@ -49,7 +49,7 @@ class RESTRequestLoggingMiddleware:
             data.update(request.execution_log_info)
         log.info("Execution Log", extra=data)
         return response
-    
+
     def _get_request_info(self, request, cached_request_body) -> dict:
         """
         Extracts info from a request (Django or DRF request object)
