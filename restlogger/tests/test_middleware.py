@@ -1,3 +1,6 @@
+from django.test import override_settings
+
+
 VALID_JWT = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjM0LCJpYXQiOjE1MTYyMzkwMjJ9"
     ".tsvf23UrZ9144-QZZRVundGdr2jXEppJ0fbpLFhIQJc"
@@ -64,6 +67,29 @@ def test_base_logging_with_api_get_request_pdf_response(
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 200
     assert kwargs["extra"]["response"]["data"] == {"content": "PDF bytes response"}
+    assert kwargs["extra"]["execution"]
+    assert kwargs["extra"]["execution"]["name"] == ""
+    assert kwargs["extra"]["execution"]["app"] == "Test"
+    assert kwargs["extra"]["execution"]["timing"]
+    assert kwargs["extra"]["execution"]["timing"]["start"]
+    assert kwargs["extra"]["execution"]["timing"]["end"]
+    assert kwargs["extra"]["execution"]["timing"]["duration"]
+
+
+@override_settings(API_LOGGER_KEY_PATH_TO_HASH=(("response", "data"),))
+def test_base_logging_with_api_get_request_pdf_response__hashed(
+    api_request_factory, middleware_pdf_api_response, mocked_logger
+):
+    request = api_request_factory.get("/foo", format="json")
+    middleware_pdf_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]
+    assert kwargs["extra"]["request"]["url"] == "/foo"
+    assert kwargs["extra"]["request"]["method"] == "GET"
+    assert kwargs["extra"]["response"]
+    assert kwargs["extra"]["response"]["status_code"] == 200
+    assert kwargs["extra"]["response"]["data"] == "Hash 57f786d902068a37fb08cefcd9e57e5e"
     assert kwargs["extra"]["execution"]
     assert kwargs["extra"]["execution"]["name"] == ""
     assert kwargs["extra"]["execution"]["app"] == "Test"
