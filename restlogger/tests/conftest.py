@@ -52,6 +52,17 @@ def get_simple_api_response(request):
     return response.render()
 
 
+def get_simple_api_error_response(request):
+    from rest_framework.renderers import JSONRenderer
+    from rest_framework.response import Response
+
+    response = Response(data={"error": "A sample error"}, status=400)
+    response.accepted_renderer = JSONRenderer()
+    response.accepted_media_type = "application/json"
+    response.renderer_context = {}
+    return response.render()
+
+
 def get_pdf_api_response(request):
     from rest_framework.renderers import JSONRenderer
     from rest_framework.response import Response
@@ -80,6 +91,15 @@ def middleware_empty_api_response():
     from restlogger.middleware import RESTRequestLoggingMiddleware
 
     yield RESTRequestLoggingMiddleware(get_simple_api_response)
+
+
+@pytest.fixture()
+def middleware_empty_api_error_response():
+    skip_if_no_django()
+
+    from restlogger.middleware import RESTRequestLoggingMiddleware
+
+    yield RESTRequestLoggingMiddleware(get_simple_api_error_response)
 
 
 @pytest.fixture()

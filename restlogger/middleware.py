@@ -44,11 +44,25 @@ class RESTRequestLoggingMiddleware:
         data.update(self._get_response_info(response))
         data.update(self._get_execution_fields(request, start_time, finish_time))
         data.update(self._get_info_fields())
-        apply_hash_filter(data)
+        if self._should_apply_hash_filter(data):
+            apply_hash_filter(data)
         with contextlib.suppress(AttributeError):
             data.update(request.execution_log_info)
         log.info("Execution Log", extra=data)
         return response
+
+    def _should_apply_hash_filter(self, data) -> bool:
+        status_code = data.get("response", {}).get("status_code")
+        if status_code is None:
+            return True
+        try:
+            status_code = int(status_code)
+        except ValueError:
+            return True
+        is_4xx_error = 400 <= status_code < 500
+        if is_4xx_error:
+            return settings.API_LOGGER_HASH_RESPONSE_ERRORS
+        return True
 
     def _get_request_info(self, request, cached_request_body) -> dict:
         """
