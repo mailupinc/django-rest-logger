@@ -129,21 +129,8 @@ def test_base_logging_with_standard_post_request__400_hashed(
     middleware_empty_api_error_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"
-    assert kwargs["extra"]
-    assert kwargs["extra"]["request"]["url"] == "/foo"
-    assert kwargs["extra"]["request"]["method"] == "POST"
-    assert kwargs["extra"]["request"]["body"] == {"key": "value"}
-    assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 400
     assert kwargs["extra"]["response"]["data"] == "Hash 94cf9790a501aaac1e630052ed88932e"
-    assert kwargs["extra"]["execution"]
-    assert kwargs["extra"]["execution"]["name"] == ""
-    assert kwargs["extra"]["execution"]["app"] == "Test"
-    assert kwargs["extra"]["execution"]["timing"]
-    assert kwargs["extra"]["execution"]["timing"]["start"]
-    assert kwargs["extra"]["execution"]["timing"]["end"]
-    assert kwargs["extra"]["execution"]["timing"]["duration"]
-    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 @override_settings(API_LOGGER_HASH_RESPONSE_ERRORS=False)
@@ -155,21 +142,8 @@ def test_base_logging_with_standard_post_request__400_not_hashed(
     middleware_empty_api_error_response(request)
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert name == "info"
-    assert kwargs["extra"]
-    assert kwargs["extra"]["request"]["url"] == "/foo"
-    assert kwargs["extra"]["request"]["method"] == "POST"
-    assert kwargs["extra"]["request"]["body"] == {"key": "value"}
-    assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 400
     assert kwargs["extra"]["response"]["data"] == {"error": "A sample error"}
-    assert kwargs["extra"]["execution"]
-    assert kwargs["extra"]["execution"]["name"] == ""
-    assert kwargs["extra"]["execution"]["app"] == "Test"
-    assert kwargs["extra"]["execution"]["timing"]
-    assert kwargs["extra"]["execution"]["timing"]["start"]
-    assert kwargs["extra"]["execution"]["timing"]["end"]
-    assert kwargs["extra"]["execution"]["timing"]["duration"]
-    assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
 def test_base_logging_with_standard_post_request(

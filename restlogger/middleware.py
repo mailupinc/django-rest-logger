@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from json import JSONDecodeError
 from typing import Callable, Dict
 
+from rest_framework.status import is_client_error
+
 from .conf import settings
 from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path, mask_sensitive_data
 
@@ -59,8 +61,7 @@ class RESTRequestLoggingMiddleware:
             status_code = int(status_code)
         except ValueError:
             return True
-        is_4xx_error = 400 <= status_code < 500
-        if is_4xx_error:
+        if is_client_error(status_code):
             return settings.API_LOGGER_HASH_RESPONSE_ERRORS
         return True
 
