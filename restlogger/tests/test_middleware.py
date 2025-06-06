@@ -121,6 +121,31 @@ def test_base_logging_with_api_post_request(api_request_factory, middleware_empt
     assert kwargs["extra"]["info"] == {"git_sha": "a-sha", "git_tag": "a-tag"}
 
 
+@override_settings(API_LOGGER_KEY_PATH_TO_HASH=(("response", "data"),))
+def test_base_logging_with_standard_post_request__400_hashed(
+    api_request_factory, middleware_empty_api_error_response, mocked_logger
+):
+    request = api_request_factory.post("/foo", {"key": "value"}, format="json")
+    middleware_empty_api_error_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]["response"]["status_code"] == 400
+    assert kwargs["extra"]["response"]["data"] == "Hash 94cf9790a501aaac1e630052ed88932e"
+
+
+@override_settings(API_LOGGER_HASH_RESPONSE_ERRORS=False)
+@override_settings(API_LOGGER_KEY_PATH_TO_HASH=(("response", "data"),))
+def test_base_logging_with_standard_post_request__400_not_hashed(
+    api_request_factory, middleware_empty_api_error_response, mocked_logger
+):
+    request = api_request_factory.post("/foo", {"key": "value"}, format="json")
+    middleware_empty_api_error_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert name == "info"
+    assert kwargs["extra"]["response"]["status_code"] == 400
+    assert kwargs["extra"]["response"]["data"] == {"error": "A sample error"}
+
+
 def test_base_logging_with_standard_post_request(
     standard_request_factory, middleware_empty_django_response, mocked_logger
 ):

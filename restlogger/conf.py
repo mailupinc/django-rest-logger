@@ -8,6 +8,8 @@ settings.API_LOGGER_URL_PATH_TO_EXCLUDE = getattr(settings, "API_LOGGER_URL_PATH
 
 settings.API_LOGGER_HASH_RESPONSE_DATA = getattr(settings, "API_LOGGER_HASH_RESPONSE_DATA", True)
 
+settings.API_LOGGER_HASH_RESPONSE_ERRORS = getattr(settings, "API_LOGGER_HASH_RESPONSE_ERRORS", True)
+
 settings.API_LOGGER_KEY_PATH_TO_HASH = getattr(settings, "API_LOGGER_KEY_PATH_TO_HASH", ())
 
 if settings.API_LOGGER_HASH_RESPONSE_DATA:
