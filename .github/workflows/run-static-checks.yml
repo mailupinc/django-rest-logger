@@ -9,7 +9,6 @@ on:
   pull_request:
     branches:
       - '*'
-      -
 jobs:
   static-checks:
     runs-on: [self-hosted, linux]
