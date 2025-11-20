@@ -112,10 +112,8 @@ class RESTRequestLoggingMiddleware:
         try:
             body = json.loads(cached_request_body)
             mask_sensitive_data(body)
-        except JSONDecodeError:
-            body = "Not a JSON body"
-        except AttributeError:
-            body = {}
+        except Exception:
+            body = {"info": "Could not read body"}
 
         return body
 
