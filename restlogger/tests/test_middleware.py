@@ -156,7 +156,7 @@ def test_base_logging_with_standard_post_request(
     assert kwargs["extra"]
     assert kwargs["extra"]["request"]["url"] == "/foo/"
     assert kwargs["extra"]["request"]["method"] == "POST"
-    assert kwargs["extra"]["request"]["body"] == "Not a JSON body"
+    assert kwargs["extra"]["request"]["body"] == {"info": "Could not read body"}
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 200
@@ -203,7 +203,7 @@ def test_base_logging_with_standard_patch_request(
     assert kwargs["extra"]
     assert kwargs["extra"]["request"]["url"] == "/foo/"
     assert kwargs["extra"]["request"]["method"] == "PATCH"
-    assert kwargs["extra"]["request"]["body"] == "Not a JSON body"
+    assert kwargs["extra"]["request"]["body"] == {"info": "Could not read body"}
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]
     assert kwargs["extra"]["response"]["status_code"] == 200
@@ -299,6 +299,28 @@ def test_base_logging_with_api_request_other_auth_headers_ok(
     name, args, kwargs = mocked_logger.mock_calls[0]
     assert kwargs["extra"]
     assert kwargs["extra"]["request"]["jwt_payload"] == {}
+
+
+def test_base_logging_with_api_request_bearer_without_token(
+    api_request_factory, middleware_empty_api_response, mocked_logger
+):
+    request = api_request_factory.get("/foo", format="json", HTTP_AUTHORIZATION="Bearer")
+    response = middleware_empty_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    assert response.status_code == 200
+    assert kwargs["extra"]["request"]["jwt_payload"] == {}
+
+
+@override_settings(API_LOGGER_SENSITIVE_HEADERS=("Authorization",))
+def test_base_logging_decodes_jwt_payload_before_masking_authorization(
+    api_request_factory, middleware_empty_api_response, mocked_logger
+):
+    request = api_request_factory.get("/foo", format="json", HTTP_AUTHORIZATION=f"Bearer {VALID_JWT}")
+    middleware_empty_api_response(request)
+    name, args, kwargs = mocked_logger.mock_calls[0]
+    request_info = kwargs["extra"]["request"]
+    assert request_info["headers"]["Authorization"] == "***FILTERED***"
+    assert request_info["jwt_payload"] == {"user_id": 1234, "iat": 1516239022}
 
 
 def test_skip_log_if_path_is_excluded(standard_request_factory, middleware_empty_api_response, mocked_logger):

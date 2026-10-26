@@ -1,4 +1,12 @@
-from restlogger.utils import apply_hash_filter, decode_jwt_token_payload, exclude_path, mask_sensitive_data
+from django.test import override_settings
+
+from restlogger.utils import (
+    apply_hash_filter,
+    decode_jwt_token_payload,
+    exclude_path,
+    mask_sensitive_data,
+    mask_sensitive_headers,
+)
 
 
 def test_decode_jwt_token_payload_ok():
@@ -100,3 +108,56 @@ def test_mask_sensitive_data_ok_if_int():
     masked_data = mask_sensitive_data(data)
 
     assert masked_data == 122
+
+
+def test_mask_sensitive_data_in_list_nested_in_dict():
+    data = {"items": [{"user": "myuser", "password": "mypassword"}, "astring"]}
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == {"items": [{"user": "myuser", "password": "***FILTERED***"}, "astring"]}
+
+
+def test_mask_sensitive_headers_from_settings():
+    headers = {"X-Test-Authorization": "Bearer a.jwt.token", "X-Test-Secret": "a-secret", "Host": "example.com"}
+
+    assert mask_sensitive_headers(headers) == {
+        "X-Test-Authorization": "***FILTERED***",
+        "X-Test-Secret": "***FILTERED***",
+        "Host": "example.com",
+    }
+
+
+def test_mask_sensitive_headers_leaves_not_configured_headers():
+    headers = {"Authorization": "Bearer a.jwt.token", "Host": "example.com"}
+
+    assert mask_sensitive_headers(headers) == headers
+
+
+@override_settings(API_LOGGER_SENSITIVE_HEADERS=("x-test-secret",))
+def test_mask_sensitive_headers_case_insensitive():
+    headers = {"X-Test-Secret": "a-secret", "X-Test-Authorization": "Bearer a.jwt.token"}
+
+    assert mask_sensitive_headers(headers) == {
+        "X-Test-Secret": "***FILTERED***",
+        "X-Test-Authorization": "Bearer a.jwt.token",
+    }
+
+
+@override_settings(API_LOGGER_SENSITIVE_EXACT_KEYS=("code",))
+def test_mask_sensitive_data_exact_keys_match_only_whole_key():
+    data = {"code": "123456", "message_code": "abc", "nested": {"code": "654321", "reason_code": "def"}}
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == {
+        "code": "***FILTERED***",
+        "message_code": "abc",
+        "nested": {"code": "***FILTERED***", "reason_code": "def"},
+    }
+
+
+@override_settings(API_LOGGER_SENSITIVE_EXACT_KEYS=("code",))
+def test_mask_sensitive_data_exact_keys_keep_substring_keys():
+    data = {"code": "123456", "new_password": "mypassword"}
+    masked_data = mask_sensitive_data(data)
+
+    assert masked_data == {"code": "***FILTERED***", "new_password": "***FILTERED***"}

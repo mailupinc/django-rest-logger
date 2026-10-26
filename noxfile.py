@@ -23,6 +23,7 @@ nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "lint",
     "mypy",
+    "tests",
 )
 
 
@@ -48,3 +49,10 @@ def mypy(session: Session) -> None:
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
+
+
+@session(python=python_versions)
+def tests(session: Session) -> None:
+    """Run the test suite with pytest."""
+    session.run_always("poetry", "install", external=True)
+    session.run("pytest", *session.posargs)

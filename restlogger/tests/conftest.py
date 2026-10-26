@@ -12,6 +12,7 @@ from restlogger.mixins import ExecutionLogMixin
 
 def pytest_configure():
     settings.configure(
+        API_LOGGER_SENSITIVE_HEADERS=("X-Test-Authorization", "X-Test-Secret"),
         API_LOGGER_URL_PATH_TO_EXCLUDE=("/path1/",),
         API_LOGGER_KEY_PATH_TO_HASH=(("path", "to", "hash"),),
         API_LOGGER_HASH_RESPONSE_DATA=False,
