@@ -9,7 +9,13 @@ from typing import Callable, Dict
 from rest_framework.status import is_client_error
 
 from .conf import settings
-from .utils import apply_hash_filter, decode_jwt_token_payload, exclude_path, mask_sensitive_data
+from .utils import (
+    apply_hash_filter,
+    decode_jwt_token_payload,
+    exclude_path,
+    mask_sensitive_data,
+    mask_sensitive_headers,
+)
 
 log = logging.getLogger("restlogger")
 
@@ -81,7 +87,7 @@ class RESTRequestLoggingMiddleware:
             "request": {
                 "url": request.get_full_path(),
                 "method": request.method,
-                "headers": headers,
+                "headers": mask_sensitive_headers(headers),
                 "body": self._get_request_body(cached_request_body),
                 "user": user,
                 "jwt_payload": jwt_payload,
@@ -94,7 +100,7 @@ class RESTRequestLoggingMiddleware:
         Extracts the JSON web token from the "Authorization" header if present
         """
         parts = auth_headers.split()
-        return "" if parts[0] not in ("Bearer", "JWT") else parts[1]
+        return parts[1] if len(parts) == 2 and parts[0] in ("Bearer", "JWT") else ""
 
     def _get_jwt_payload(self, auth_headers) -> dict:
         """

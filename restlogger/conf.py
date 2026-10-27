@@ -19,6 +19,12 @@ settings.API_LOGGER_SENSITIVE_KEYS = getattr(settings, "API_LOGGER_SENSITIVE_KEY
 
 settings.API_LOGGER_SENSITIVE_KEYS += ("password",)
 
+# Masked only when the key name is exactly one of these (API_LOGGER_SENSITIVE_KEYS matches substrings)
+settings.API_LOGGER_SENSITIVE_EXACT_KEYS = getattr(settings, "API_LOGGER_SENSITIVE_EXACT_KEYS", ())
+
+# Request headers whose value is masked in the log (case-insensitive names)
+settings.API_LOGGER_SENSITIVE_HEADERS = getattr(settings, "API_LOGGER_SENSITIVE_HEADERS", ())
+
 settings.API_LOGGER_DEFAULT_LOG_LEVEL = getattr(settings, "API_LOGGER_DEFAULT_LOG_LEVEL", logging.INFO)
 
 settings.API_LOGGER_APP_NAME = getattr(settings, "API_LOGGER_APP_NAME", "")

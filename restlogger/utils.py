@@ -31,17 +31,28 @@ def mask_sensitive_data(data: Union[dict, list]) -> Union[dict, list]:
 
 def mask_sensitive_data_dict(data: dict) -> dict:
     """
-    Iterates over data dict and mask any key that contains one of sensitive keys defined in settings
+    Iterates over data dict and mask any key that contains one of sensitive keys defined in settings,
+    or that is exactly one of the sensitive exact keys
     """
     for key, value in data.items():
-        if any(sensitive_key in key for sensitive_key in settings.API_LOGGER_SENSITIVE_KEYS):
+        if key in settings.API_LOGGER_SENSITIVE_EXACT_KEYS or any(
+            sensitive_key in key for sensitive_key in settings.API_LOGGER_SENSITIVE_KEYS
+        ):
             if isinstance(value, list):
                 data[key] = ["***FILTERED***" for item in data[key]]
             else:
                 data[key] = "***FILTERED***"
-        if isinstance(value, dict):
+        elif isinstance(value, (dict, list)):
             mask_sensitive_data(value)
     return data
+
+
+def mask_sensitive_headers(headers: dict) -> dict:
+    """
+    Returns a copy of headers where the value of every sensitive header defined in settings is masked
+    """
+    sensitive_headers = {header.lower() for header in settings.API_LOGGER_SENSITIVE_HEADERS}
+    return {name: "***FILTERED***" if name.lower() in sensitive_headers else value for name, value in headers.items()}
 
 
 def hash_object(object) -> str:
